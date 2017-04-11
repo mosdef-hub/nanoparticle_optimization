@@ -98,11 +98,29 @@ class System(object):
 
         return U
 
-if __name__ == "__main__":
-    from nanoparticle_optimization.lib.CG_nano import CG_nano
-    from forcefield import Mie
+    def calc_error(self, forcefield, target, configurations=50, norm=True):
+        U = [potential[0] for potential in self.calc_potential(forcefield, 
+                                                separations=target.separations,
+                                                configurations=configurations)]
+        error = sum(abs(target.potential - U))
+        if norm:
+            error /= sum(abs(target.potential) + abs(np.asarray(U)))
 
-    nano = CG_nano(3.0, sigma=0.9)
+        return error
+
+if __name__ == "__main__":
+    from nanoparticle_optimization.forcefield import Mie, Parameter
+    from nanoparticle_optimization.lib.CG_nano import CG_nano
+    from nanoparticle_optimization.target import load
+
+    nano = CG_nano(3.0, sigma=0.8)
     system = System(nano)
-    ff = Mie(sigma=0.9, epsilon=0.4, n=12, m=6)
-    system.calc_potential(forcefield=ff, separations=np.linspace(6,10,10), trajectory='traj.xyz')
+
+    sigma = Parameter(value=0.8, upper=1.2, lower=0.6)
+    epsilon = Parameter(value=0.4, upper=0.6, lower=0.3)
+    n = Parameter(value=12, upper=25, lower=10)
+    m = Parameter(value=6, fixed=True)
+    ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
+
+    target = load('target.txt')
+    error = system.calc_error(ff, target)
