@@ -48,9 +48,9 @@ class System(object):
             traj.write('{}\n\n'.format(self.nanoparticle.n_particles +
                                        self.nanoparticle2.n_particles))
             for coord in self.nanoparticle.xyz:
-                traj.write('CG1\t{}\n'.format('\t'.join(['{}'*3]).format(*coord)))
+                traj.write('CG1\t{}\n'.format('\t'.join(map(str,coord))))
             for coord in self.nanoparticle2.xyz:
-                traj.write('CG2\t{}\n'.format('\t'.join(['{}'*3]).format(*coord)))
+                traj.write('CG2\t{}\n'.format('\t'.join(map(str,coord))))
 
         return U
 
@@ -92,7 +92,7 @@ class System(object):
                 if trajectory and i % frequency:
                     U_local = self.calc_potential_single_state(forcefield, trajectory)
                 else:
-                    U_local = self.calc_potential_single_state_fast(forcefield, False)
+                    U_local = self.calc_potential_single_state_fast(forcefield)
                 U_sep.append(U_local)
             U.append((np.mean(U_sep), np.std(U_sep)))
 
