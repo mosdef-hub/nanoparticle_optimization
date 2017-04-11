@@ -34,7 +34,6 @@ class System(object):
             self.nanoparticle2.translate_to([separation, 0, 0])
         self.nanoparticle2.spin(np.random.random() * np.pi * 2, np.random.random(3))
 
-    @jit
     def calc_potential_single_state(self, forcefield, trajectory=False):
         np1 = self.nanoparticle
         np2 = self.nanoparticle2
@@ -52,6 +51,18 @@ class System(object):
                 traj.write('CG1\t{}\n'.format('\t'.join(['{}'*3]).format(*coord)))
             for coord in self.nanoparticle2.xyz:
                 traj.write('CG2\t{}\n'.format('\t'.join(['{}'*3]).format(*coord)))
+
+        return U
+
+    @jit
+    def calc_potential_single_state_fast(self, forcefield):
+        np1 = self.nanoparticle
+        np2 = self.nanoparticle2
+
+        dists = np.ravel(distance.cdist(np1.xyz, np2.xyz, 'euclidean'))
+        U = 0
+        for dist in dists:
+            U += forcefield.calc_potential(dist)
 
         return U
 
@@ -81,7 +92,7 @@ class System(object):
                 if trajectory and i % frequency:
                     U_local = self.calc_potential_single_state(forcefield, trajectory)
                 else:
-                    U_local = self.calc_potential_single_state(forcefield, False)
+                    U_local = self.calc_potential_single_state_fast(forcefield, False)
                 U_sep.append(U_local)
             U.append((np.mean(U_sep), np.std(U_sep)))
 
@@ -94,4 +105,4 @@ if __name__ == "__main__":
     nano = CG_nano(3.0, sigma=0.9)
     system = System(nano)
     ff = Mie(sigma=0.9, epsilon=0.4, n=12, m=6)
-    system.calc_potential(forcefield=ff, separations=np.linspace(6,10,10))
+    system.calc_potential(forcefield=ff, separations=np.linspace(6,10,10), trajectory='traj.xyz')
