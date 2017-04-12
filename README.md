@@ -7,10 +7,15 @@ software.
 
 After cloning the git repository, install the following prerequisites
 
-`conda install mdtraj -c omnia` Python 2 only
+Python 2 & 3
 ```
 conda install openmm -c omnia
 conda install llvmlite
+```
+
+Python 2 only
+```
+conda install mdtraj -c omnia
 ```
 
 Then, from the package root directory, install the package via
