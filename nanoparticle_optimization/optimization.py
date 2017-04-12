@@ -45,12 +45,13 @@ class Optimization(Component):
 
         top.driver = ScipyOptimizer()
         top.driver.options['optimizer'] = 'COBYLA'
+        top.driver.options['maxiter'] = 500
 
         for i, key in enumerate(self._init_params_dict):
             top.driver.add_desvar('p{}.{}'.format(i, key),
                 lower=self.forcefield.__dict__[key].lower,
                 upper=self.forcefield.__dict__[key].upper,
-                scaler=1/self._init_params_dict[key]['val'])
+                scaler=2/self._init_params_dict[key]['val'])
         top.driver.add_objective('p.residual')
 
         top.setup(check=True)
