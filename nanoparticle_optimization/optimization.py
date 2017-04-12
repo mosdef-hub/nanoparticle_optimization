@@ -75,20 +75,39 @@ class Optimization(Component):
             print('Residual:\t{}\n'.format(residual))
 
 if __name__ == "__main__":
+    import pkg_resources
+
+    import nanoparticle_optimization
     from nanoparticle_optimization.forcefield import Mie, Parameter
     from nanoparticle_optimization.lib.CG_nano import CG_nano
     from nanoparticle_optimization.system import System
     from nanoparticle_optimization.target import load
 
     sigma = Parameter(value=0.8, fixed=True)
-    epsilon = Parameter(value=0.4, upper=0.6, lower=0.3)
-    n = Parameter(value=12.0, upper=25.0, lower=10.0)
+    epsilon = Parameter(value=4.0, upper=15.0, lower=1.0)
+    n = Parameter(value=18.0, upper=25.0, lower=10.0)
     m = Parameter(value=6.0, fixed=True)
     ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
     nano = CG_nano(3.0, sigma=0.8)
     system = System(nano)
-    target = load('/Users/asummers/Documents/Coarse-grained-nps/All-atom/U-np-np/U_3nm.txt')
+
+    resource_package = nanoparticle_optimization.__name__
+    resource_path = '/'.join(('utils', '3nm_target-short.txt'))
+    target = load(pkg_resources.resource_filename(resource_package, resource_path))
+
     target.separations /= 10.0
-    optimization = Optimization(ff, system, target, configurations=2, verbose=True)
+    optimization = Optimization(ff, system, target, configurations=2, verbose=False)
+
+    import cProfile, pstats, io
+    pr = cProfile.Profile()
+    pr.enable()
+
     optimization.driver()
+
+    pr.disable()
+    s = io.StringIO()
+    sortby = 'cumulative'
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print(s.getvalue())

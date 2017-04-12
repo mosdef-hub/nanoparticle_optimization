@@ -1,10 +1,12 @@
+from copy import deepcopy
 from random import random
 
 from numba import jit
 import numpy as np
 from scipy.spatial import distance
 
-import mbuild as mb
+from mbuild.coordinate_transform import Rotation
+
 
 class System(object):
     """A system of two nanoparticles.
@@ -22,49 +24,41 @@ class System(object):
     def __init__(self, nanoparticle, nanoparticle2=None):
         super(System, self).__init__()
 
-        self.nanoparticle = nanoparticle
+        self.xyz = nanoparticle.xyz
         if nanoparticle2:
-            self.nanoparticle2 = nanoparticle2
+            self.xyz2 = nanoparticle2.xyz
         else:
-            self.nanoparticle2 = mb.clone(nanoparticle)
+            self.xyz2 = deepcopy(self.xyz)
 
-    @jit
     def generate_configuration(self, separation=None):
         if separation:
-            self.nanoparticle2.translate_to([separation, 0, 0])
-        self.nanoparticle2.spin(np.random.random() * np.pi * 2, np.random.random(3))
+            self._translate_to(np.array([separation, 0, 0]))
+        self._spin(np.random.random() * np.pi * 2, np.random.random(3))
 
     def calc_potential_single_state(self, forcefield, trajectory=False):
-        np1 = self.nanoparticle
-        np2 = self.nanoparticle2
+        xyz1 = self.xyz
+        xyz2 = self.xyz2
 
-        dists = np.ravel(distance.cdist(np1.xyz, np2.xyz, 'euclidean'))
-        U = 0
-        for dist in dists:
-            U += forcefield.calc_potential(dist)
+        dists = np.ravel(distance.cdist(xyz1, xyz2, 'euclidean'))
 
         if trajectory:
             traj = open(trajectory, 'a')
-            traj.write('{}\n\n'.format(self.nanoparticle.n_particles +
-                                       self.nanoparticle2.n_particles))
-            for coord in self.nanoparticle.xyz:
+            traj.write('{}\n\n'.format(len(xyz1) + len(xyz2)))
+            for coord in xyz1:
                 traj.write('CG1\t{}\n'.format('\t'.join(map(str,coord))))
-            for coord in self.nanoparticle2.xyz:
+            for coord in xyz2:
                 traj.write('CG2\t{}\n'.format('\t'.join(map(str,coord))))
 
-        return U
+        return np.sum(forcefield.calc_potential(dists))
 
     @jit
     def calc_potential_single_state_fast(self, forcefield):
-        np1 = self.nanoparticle
-        np2 = self.nanoparticle2
+        xyz1 = self.xyz
+        xyz2 = self.xyz2
 
-        dists = np.ravel(distance.cdist(np1.xyz, np2.xyz, 'euclidean'))
-        U = 0
-        for dist in dists:
-            U += forcefield.calc_potential(dist)
+        dists = np.ravel(distance.cdist(xyz1, xyz2, 'euclidean'))
 
-        return U
+        return np.sum(forcefield.calc_potential(dists))
 
     def calc_potential(self, forcefield, separations, configurations=50,
                        trajectory=False, frequency=5):
@@ -89,7 +83,7 @@ class System(object):
                     self.generate_configuration(separation=sep)
                 else:
                     self.generate_configuration()
-                if trajectory and i % frequency:
+                if trajectory and i % frequency == 0:
                     U_local = self.calc_potential_single_state(forcefield, trajectory)
                 else:
                     U_local = self.calc_potential_single_state_fast(forcefield)
@@ -108,6 +102,16 @@ class System(object):
 
         return error
 
+    def _spin(self, theta, around):
+        center = np.mean(self.xyz2, axis=0)
+        self.xyz2 -= center
+        self.xyz2 = Rotation(theta, around).apply_to(self.xyz2)
+        self.xyz2 += center
+
+    def _translate_to(self, pos):
+        center = np.mean(self.xyz2, axis=0)
+        self.xyz2 += pos - center
+
 if __name__ == "__main__":
     from nanoparticle_optimization.forcefield import Mie, Parameter
     from nanoparticle_optimization.lib.CG_nano import CG_nano
@@ -122,5 +126,9 @@ if __name__ == "__main__":
     m = Parameter(value=6, fixed=True)
     ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
+    U = system.calc_potential(ff, np.linspace(6, 10, 10), configurations=10, trajectory='traj.xyz', frequency=1)
+
+    '''
     target = load('target.txt')
     error = system.calc_error(ff, target)
+    '''

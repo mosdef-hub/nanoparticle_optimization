@@ -20,15 +20,17 @@ class Mie(Forcefield):
         self.m = m
 
     def calc_potential(self, r):
+        if not hasattr(r, "__iter__"):
+            r = [r]
+
         sigma = self.sigma.value
         epsilon = self.epsilon.value
         n = self.n.value
         m = self.m.value
 
         C = (n / (n - m)) * ((n / m) ** (m / (n - m)))
-        w = sigma / r
 
-        return C * epsilon * ((w ** n) - (w ** m))
+        return C * epsilon * (((sigma/r) ** n) - ((sigma/r) ** m))
 
 class Parameter(object):
     def __init__(self, value, upper=None, lower=None, fixed=False):
