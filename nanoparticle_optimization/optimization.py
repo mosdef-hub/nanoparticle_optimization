@@ -49,7 +49,8 @@ class Optimization(Component):
         for i, key in enumerate(self._init_params_dict):
             top.driver.add_desvar('p{}.{}'.format(i, key),
                 lower=self.forcefield.__dict__[key].lower,
-                upper=self.forcefield.__dict__[key].upper)
+                upper=self.forcefield.__dict__[key].upper,
+                scaler=1/self._init_params_dict[key]['val'])
         top.driver.add_objective('p.residual')
 
         top.setup(check=True)
