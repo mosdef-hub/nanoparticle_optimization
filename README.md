@@ -6,6 +6,7 @@ It is recommended that the Anaconda package manager be used for installation of 
 software.
 
 After cloning the git repository, install the following prerequisites
+
 `conda install mdtraj -c omnia` Python 2 only
 ```
 conda install openmm -c omnia
