@@ -2,10 +2,11 @@
 
 # Installation
 
-After cloning the git repository, install using:
+After cloning the git repository, install by running
 ```
 pip install -e .
 ```
+from the root directory.
 
 # Tutorials
 
