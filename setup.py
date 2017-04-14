@@ -6,5 +6,10 @@ setup(
     long_description=__doc__,
     packages=find_packages(),
     include_package_data=True,
+    install_requires=[
+        'numba',
+        'mbuild',
+        'openmdao',
+    ],
     zip_safe=False,
 )
