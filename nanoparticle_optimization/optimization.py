@@ -84,9 +84,7 @@ class Optimization(object):
                 print('{}: {}\n'.format(param, value))
             self.forcefield.__dict__[param].value = value
 
-        if (self.forcefield.__class__.__name__ == 'Mie' and
-                self.forcefield.__dict__['m'].value >=
-                self.forcefield.__dict__['n'].value):
+        if any(constr() for constr in self.forcefield.constraints):
             return 1.0
 
         residual = 0
