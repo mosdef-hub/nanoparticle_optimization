@@ -72,6 +72,10 @@ class Optimization(object):
             if self.verbose:
                 print('{}: {}\n'.format(param, value))
             self.forcefield.__dict__[param].value = value
+        if (self.forcefield.__class__.__name__ == 'Mie' and
+                self.forcefield.__dict__['m'].value >=
+                self.forcefield.__dict__['n'].value):
+            return 1.0
         return self._residual()
 
     def _leastsq_residual(self, values, *params):
@@ -108,8 +112,8 @@ if __name__ == "__main__":
 
     sigma = Parameter(value=0.8, fixed=True)
     epsilon = Parameter(value=4.0, upper=15.0, lower=1.0)
-    n = Parameter(value=18.0, upper=25.0, lower=10.0)
-    m = Parameter(value=6.0, fixed=True)
+    n = Parameter(value=18.0, upper=25.0, lower=5.0)
+    m = Parameter(value=6.0, upper=10.0, lower=2.0)
     ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
     nano = CG_nano(3.0, sigma=0.8)
