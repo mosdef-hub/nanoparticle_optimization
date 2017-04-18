@@ -4,7 +4,7 @@ from __future__ import print_function
 from copy import deepcopy
 
 import numpy as np
-from scipy.optimize import brute, least_squares
+from scipy.optimize import brute, fmin
 
 
 class Optimization(object):
@@ -30,76 +30,76 @@ class Optimization(object):
         self.grid = None
         self.grid_residuals = None
 
-    def optimize(self, algorithm='brute', verbose=False, grid_spacing=10):
-        """
+    def optimize(self, brute_force=True, verbose=False, grid_spacing=10,
+                 polishing_function=fmin, **kwargs):
+        """ Optimize force field parameters via potential matching
+
+        Force field parameters are optimized by matching the interaction potential
+        of the nanoparticle system defined in the System class with a target defined
+        in the Target class. A brute force optimization is performed along a grid,
+        ensuring that the optimization does not get stuck in local minima. A
+        "polishing" function is then used with the result of the brute force
+        optimization as an initial state. All optimizations are performed utilizing
+        Scipy's optimize module (https://docs.scipy.org/doc/scipy/reference/
+        optimize.html#module-scipy.optimize).
+
         Parameters
         ----------
-        algorithm : str, optional, default='brute'
+        brute_force : bool, optional, default=True
+            Perform a brute force optimization, evaluating the error in interaction
+            potential along a grid of force field values. See the documentation for
+            Scipy's optimize.brute function (https://docs.scipy.org/doc/scipy-0.15.1/
+            reference/generated/scipy.optimize.brute.html) for more details.
         verbose : bool, optional, default=False
-
-        Other Parameters
-        ----------------
+            Output the value of the parameters to be optimized at each
+            point in the optimization.
         grid_spacing : int, optional, default=10
-            Valid for 'brute' algorithm only
+            The number of grid points along each axis.  Only necessary when
+            brute_force is True.
+        polishing_function : callable, optional, default=scipy.optimize.fmin
+            "Polishing" function that uses the result of the brute force
+            minimization as an initial guess
         """
         if verbose:
             self.verbose = True
         params = tuple(param for param in self.forcefield.__dict__ if not
             self.forcefield.__dict__[param].fixed)
-        if algorithm == 'brute':
+        if brute_force:
             limits = tuple((self.forcefield.__dict__[param].lower,
                 self.forcefield.__dict__[param].upper) for param in params)
-            x0, fval, grid, Jout = brute(self._brute_residual, ranges=limits,
-                args=params, Ns=grid_spacing, full_output=True)
+            x0, fval, grid, Jout = brute(self._residual, ranges=limits,
+                args=params, full_output=True, Ns=grid_spacing,
+                finish=polishing_function)
             self.grid = grid
             self.grid_residuals = Jout
-
-        if algorithm == 'leastsq':
+        else:
             values = np.array([self.forcefield.__dict__[param].value for 
                 param in params])
-            lower_limits = [self.forcefield.__dict__[param].lower for param in params]
-            upper_limits = [self.forcefield.__dict__[param].upper for param in params]
-            limits = tuple([lower_limits, upper_limits])
-            if verbose:
-                verbosity = 2
-            else:
-                verbosity = 0
-            res_log = least_squares(self._leastsq_residual, x0=values,
-                bounds=limits, args=(params), method='trf', verbose=verbosity)
+            opt_result = polishing_function(self._residual, x0=values, args=params, **kwargs)
+        self.verbose = False
 
-    def _brute_residual(self, values, *params):
+    def _residual(self, values, *params):
         for param, value in zip(params, values):
             if self.verbose:
                 print('{}: {}\n'.format(param, value))
             self.forcefield.__dict__[param].value = value
+
         if (self.forcefield.__class__.__name__ == 'Mie' and
                 self.forcefield.__dict__['m'].value >=
                 self.forcefield.__dict__['n'].value):
             return 1.0
-        return self._residual()
 
-    def _leastsq_residual(self, values, *params):
-        for param, value in zip(params, values):
-            self.forcefield.__dict__[param].value = value
-        return self._residual_leastsq()
-
-    def _residual(self):
         residual = 0
         for system, target in zip(self.systems, self.targets):
-            # Need to introduce a penalty if n < m...
             residual += system.calc_error(self.forcefield, target,
                 configurations=self.configurations, norm=self.normalize_error)
         return residual
 
-    def _residual_leastsq(self):
-        residual = []
-        for system, target in zip(self.systems, self.targets):
-            U = [potential[0] for potential in system.calc_potential(self.forcefield,
-                 separations=target.separations, configurations=self.configurations)]
-            for i, val in enumerate(U):
-                error = abs(target.potential[i] - val) / (abs(target.potential[i]) + abs(val))
-                residual.append(error)
-        return np.asarray(residual)
+    def residual(self):
+        params = tuple(param for param in self.forcefield.__dict__ if not
+            self.forcefield.__dict__[param].fixed)
+        values = np.array([self.forcefield.__dict__[param].value for param in params])
+        return self._residual(values, *params)
 
 if __name__ == "__main__":
     import pkg_resources
@@ -125,7 +125,8 @@ if __name__ == "__main__":
 
     target.separations /= 10.0
     optimization = Optimization(ff, system, target, configurations=2)
-    optimization.optimize(algorithm='brute', verbose=True)
+    from scipy import optimize
+    optimization.optimize(brute_force=True, verbose=True, polishing_function=optimize.fmin)
 
     '''
     import cProfile, pstats, io
