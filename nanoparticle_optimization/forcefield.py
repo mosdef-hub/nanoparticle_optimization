@@ -1,9 +1,11 @@
 from __future__ import division
 
 from abc import ABCMeta, abstractmethod
+from six import string_types
 
 from numba import jit
 import numpy as np
+
 
 class Forcefield(object):
     __metaclass__ = ABCMeta
@@ -17,14 +19,32 @@ class Forcefield(object):
     def add_constraint(self, constraint):
         self.constraints.append(constraint)
 
+    def __getitem__(self, selection):
+        if isinstance(selection, string_types):
+            return self.__dict__[selection].value
+
+    def __iter__(self):
+        for name, properties in self.__dict__.items():
+            if isinstance(properties, Parameter):
+                yield name, properties
+
+    def __setattr__(self, name, value):
+        if isinstance(value, (int, float)):
+            self[name] = value
+        else:
+            self.__dict__[name] = value
+
+    def __setitem__(self, key, value):
+        self.__dict__[key].value = value
+
 class Mie(Forcefield):
     def __init__(self, sigma, epsilon, n, m):
-        super(Mie, self).__init__()
-
         self.sigma = sigma
         self.epsilon = epsilon
         self.n = n
         self.m = m
+
+        super(Mie, self).__init__()
 
         self.add_constraint(self.constr1)
 
@@ -56,6 +76,7 @@ class Parameter(object):
             self.upper = upper
             self.lower = lower
 
+    # Overwrite comparisons to compare Parameter.value
     def __eq__(self, other):
         return self.value == other.value
 
@@ -81,4 +102,3 @@ if __name__ == "__main__":
     m = Parameter(value=20, fixed=True)
 
     ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
-    import pdb;pdb.set_trace()
