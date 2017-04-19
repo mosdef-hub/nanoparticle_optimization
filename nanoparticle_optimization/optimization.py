@@ -31,7 +31,7 @@ class Optimization(object):
         self.grid_residuals = None
 
     def optimize(self, brute_force=True, verbose=False, grid_spacing=10,
-                 polishing_function=fmin, **kwargs):
+                 polishing_function=fmin, threads=1, **kwargs):
         """ Optimize force field parameters via potential matching
 
         Force field parameters are optimized by matching the interaction potential
@@ -62,42 +62,60 @@ class Optimization(object):
         """
         if verbose:
             self.verbose = True
-        params = tuple(param for param in self.forcefield.__dict__ if not
-            self.forcefield.__dict__[param].fixed)
+        param_names = tuple(name for name, param in self.forcefield if not 
+            param.fixed)
         if brute_force:
-            limits = tuple((self.forcefield.__dict__[param].lower,
-                self.forcefield.__dict__[param].upper) for param in params)
-            x0, fval, grid, Jout = brute(self._residual, ranges=limits,
-                args=params, full_output=True, Ns=grid_spacing,
-                finish=polishing_function)
+            limits = tuple((param.lower, param.upper) for name, param in 
+                self.forcefield if not param.fixed)
+            if threads == 1:
+                x0, fval, grid, Jout = brute(self._residual, ranges=limits,
+                    args=param_names, full_output=True, Ns=grid_spacing,
+                    finish=polishing_function)
+            else:
+                from utils.parallel_py3 import parbrute
+                x0, fval, grid, Jout = parbrute(self._residual, ranges=limits,
+                    args=param_names, full_output=True, Ns=grid_spacing,
+                    finish=polishing_function, threads=threads)
             self.grid = grid
             self.grid_residuals = Jout
         else:
-            values = np.array([self.forcefield.__dict__[param].value for 
-                param in params])
-            opt_result = polishing_function(self._residual, x0=values, args=params, **kwargs)
+            values = np.array([param.value for name, param in self.forcefield if not 
+                param.fixed])
+            opt_result = polishing_function(self._residual, x0=values,
+                args=param_names, **kwargs)
         self.verbose = False
 
-    def _residual(self, values, *params):
-        for param, value in zip(params, values):
-            if self.verbose:
-                print('{}: {}\n'.format(param, value))
-            self.forcefield.__dict__[param].value = value
+    def _residual(self, values, *param_names):
+        if not param_names:
+            param_names = tuple(name for name, param in self.forcefield if not 
+            param.fixed)
+        for param_name, value in zip(param_names, values):
+            self.forcefield[param_name] = value
 
-        if any(constr() for constr in self.forcefield.constraints):
-            return 1.0
+        if not all(constr() for constr in self.forcefield.constraints):
+            if self.verbose:
+                print('Forcefield constraint failed, penalizing residual\n\n')
+            if self.normalize_error:
+                return 1.0
+            else:
+                return 1e4
 
         residual = 0
         for system, target in zip(self.systems, self.targets):
             residual += system.calc_error(self.forcefield, target,
                 configurations=self.configurations, norm=self.normalize_error)
+        if self.verbose:
+            for param_name, value in zip(param_names, values):
+                print('{}: {}\n'.format(param_name, value))
+            print('Residual: {}\n\n'.format(residual))
         return residual
 
     def residual(self):
-        params = tuple(param for param in self.forcefield.__dict__ if not
-            self.forcefield.__dict__[param].fixed)
-        values = np.array([self.forcefield.__dict__[param].value for param in params])
-        return self._residual(values, *params)
+        param_names = tuple(name for name, param in self.forcefield if not 
+            param.fixed)
+        values = np.array([param.value for name, param in self.forcefield if not 
+            param.fixed])
+        return self._residual(values, *param_names)
 
 if __name__ == "__main__":
     import pkg_resources
@@ -124,7 +142,7 @@ if __name__ == "__main__":
     target.separations /= 10.0
     optimization = Optimization(ff, system, target, configurations=2)
     from scipy import optimize
-    optimization.optimize(brute_force=True, verbose=True, polishing_function=optimize.fmin)
+    optimization.optimize(verbose=True, threads=2)
 
     '''
     import cProfile, pstats, io
