@@ -72,7 +72,7 @@ class Optimization(object):
                     args=param_names, full_output=True, Ns=grid_spacing,
                     finish=polishing_function)
             else:
-                from utils.parallel_py3 import parbrute
+                from .utils.parallel import parbrute
                 x0, fval, grid, Jout = parbrute(self._residual, ranges=limits,
                     args=param_names, full_output=True, Ns=grid_spacing,
                     finish=polishing_function, threads=threads)
