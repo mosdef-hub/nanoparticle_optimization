@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 
 from copy import deepcopy
+from functools import partial
 
 import numpy as np
 from scipy.optimize import brute, fmin
@@ -64,6 +65,8 @@ class Optimization(object):
             self.verbose = True
         param_names = tuple(name for name, param in self.forcefield if not 
             param.fixed)
+        if polishing_function:
+            polishing_function = partial(polishing_function, **kwargs)
         if brute_force:
             limits = tuple((param.lower, param.upper) for name, param in 
                 self.forcefield if not param.fixed)
@@ -82,7 +85,7 @@ class Optimization(object):
             values = np.array([param.value for name, param in self.forcefield if not 
                 param.fixed])
             opt_result = polishing_function(self._residual, x0=values,
-                args=param_names, **kwargs)
+                args=param_names)
         self.verbose = False
 
     def _residual(self, values, *param_names):
@@ -96,9 +99,9 @@ class Optimization(object):
             if self.verbose:
                 print('Forcefield constraint failed, penalizing residual\n\n')
             if self.normalize_error:
-                return 1.0
+                return 1.0 * len(self.systems)
             else:
-                return 1e4
+                return 1e4 * len(self.systems)
 
         residual = 0
         for system, target in zip(self.systems, self.targets):
