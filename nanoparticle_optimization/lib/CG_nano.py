@@ -12,6 +12,7 @@ class CG_nano(mb.Compound):
         super(CG_nano, self).__init__()
 
         r_CG = sigma / 2
+        r_silica = (4.0323) / 2
 
         # N_approx = a(R/sigma)^2 + b(R/sigma) + c
         # Not an exact number but very close
@@ -34,7 +35,7 @@ class CG_nano(mb.Compound):
             check_high = self._check_overlap(mask_high, r_CG)
             if check == False and check_high == True:
                 mask = mb.SpherePattern(mid)
-                mask.scale(r - r_CG)
+                mask.scale(r - r_CG + r_silica)
                 opt_points = mid
             elif check == True:
                 max_points = mid - 1
