@@ -12,7 +12,7 @@ class CG_nano(mb.Compound):
         super(CG_nano, self).__init__()
 
         r_CG = sigma / 2
-        r_silica = (4.0323 * 0.8) / 2
+        r_silica = (0.40323 * 0.8) / 2
 
         # N_approx = a(R/sigma)^2 + b(R/sigma) + c
         # Not an exact number but very close
