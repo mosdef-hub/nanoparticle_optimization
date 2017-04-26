@@ -21,7 +21,7 @@ class System(object):
         A second nanoparticle prototype.  Should be defined if desiring to calculate
         the interaction potential between two dissimilar nanoparticles.
     """
-    def __init__(self, nanoparticle, nanoparticle2=None):
+    def __init__(self, nanoparticle, nanoparticle2=None, seed=12345):
         super(System, self).__init__()
 
         self.xyz = nanoparticle.xyz
@@ -29,6 +29,7 @@ class System(object):
             self.xyz2 = nanoparticle2.xyz
         else:
             self.xyz2 = deepcopy(self.xyz)
+        np.random.seed(seed)
 
     def generate_configuration(self, separation=None):
         if separation:
@@ -113,6 +114,9 @@ class System(object):
         self.xyz2 += pos - center
 
 if __name__ == "__main__":
+    import pkg_resources
+
+    import nanoparticle_optimization
     from nanoparticle_optimization.forcefield import Mie, Parameter
     from nanoparticle_optimization.lib.CG_nano import CG_nano
     from nanoparticle_optimization.target import load
@@ -120,13 +124,20 @@ if __name__ == "__main__":
     nano = CG_nano(3.0, sigma=0.8)
     system = System(nano)
 
-    sigma = Parameter(value=0.8, upper=1.2, lower=0.6)
-    epsilon = Parameter(value=0.4, upper=0.6, lower=0.3)
-    n = Parameter(value=12, upper=25, lower=10)
-    m = Parameter(value=6, fixed=True)
+    sigma = Parameter(value=0.8, fixed=True)
+    epsilon = Parameter(value=15, fixed=True)
+    n = Parameter(value=25, fixed=True)
+    m = Parameter(value=10, fixed=True)
     ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
-    U = system.calc_potential(ff, np.linspace(6, 10, 10), configurations=10, trajectory='traj.xyz', frequency=1)
+    resource_package = nanoparticle_optimization.__name__
+    resource_path = '/'.join(('utils', 'U_3nm.txt'))
+    target = load(pkg_resources.resource_filename(resource_package, resource_path))
+
+    target.separations /= 10.0
+
+    error = system.calc_error(ff, target, configurations=25)
+    print(error)
 
     '''
     target = load('target.txt')
