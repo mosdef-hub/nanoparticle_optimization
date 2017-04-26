@@ -64,6 +64,38 @@ class Mie(Forcefield):
     def constr1(self):
         return self.n > self.m
 
+class VDW(Forcefield):
+    def __init__(self, C, m):
+        self.C = C
+        self.m = m
+
+        super(VDW, self).__init__()
+
+    def calc_potential(self, r):
+        if not hasattr(r, "__iter__"):
+            r = [r]
+
+        C = self.C.value
+        m = self.m.value
+
+        return C / (r ** m)
+
+class Yukawa(Forcefield):
+    def __init__(self, C, kappa):
+        self.C = C
+        self.kappa = kappa
+
+        super(Yukawa, self).__init__()
+
+    def calc_potential(self, r):
+        if not hasattr(r, "__iter__"):
+            r = [r]
+
+        C = self.C.value
+        kappa = self.kappa.value
+
+        return C * np.exp(-kappa * r) / r
+
 class Parameter(object):
     def __init__(self, value, upper=None, lower=None, fixed=False):
         super(Parameter, self).__init__()
