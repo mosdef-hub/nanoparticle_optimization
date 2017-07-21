@@ -21,8 +21,10 @@ class Optimization(object):
             raise ValueError("The number of systems and target must be equal!")
 
         self.configurations = configurations
+        self.cut = None
         self.forcefield = forcefield
         self.normalize_error = normalize_error
+        self.r_dependent_sampling = False
         self.systems = systems
         self.targets = targets
 
@@ -32,7 +34,8 @@ class Optimization(object):
         self.grid_residuals = None
 
     def optimize(self, brute_force=True, verbose=False, grid_spacing=10,
-                 polishing_function=fmin, threads=1, **kwargs):
+                 polishing_function=fmin, threads=1, cut=None, 
+                 r_dependent_sampling=False, **kwargs):
         """ Optimize force field parameters via potential matching
 
         Force field parameters are optimized by matching the interaction potential
@@ -61,6 +64,8 @@ class Optimization(object):
             "Polishing" function that uses the result of the brute force
             minimization as an initial guess
         """
+        self.cut = cut
+        self.r_dependent_sampling = r_dependent_sampling
         if verbose:
             self.verbose = True
         param_names = tuple(name for name, param in self.forcefield if not 
@@ -106,7 +111,8 @@ class Optimization(object):
         residual = 0
         for system, target in zip(self.systems, self.targets):
             residual += system.calc_error(self.forcefield, target,
-                configurations=self.configurations, norm=self.normalize_error)
+                configurations=self.configurations, norm=self.normalize_error,
+                cut=self.cut, r_dependent_sampling=self.r_dependent_sampling)
         if self.verbose:
             for param_name, value in zip(param_names, values):
                 print('{}: {}\n'.format(param_name, value))
@@ -129,23 +135,22 @@ if __name__ == "__main__":
     from nanoparticle_optimization.system import System
     from nanoparticle_optimization.target import load
 
-    sigma = Parameter(value=0.8, fixed=True)
+    sigma = Parameter(value=0.6, fixed=True)
     epsilon = Parameter(value=4.0, upper=15.0, lower=1.0)
     n = Parameter(value=18.0, upper=25.0, lower=5.0)
     m = Parameter(value=6.0, upper=10.0, lower=2.0)
     ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
-    nano = CG_nano(3.0, sigma=0.8)
+    nano = CG_nano(3.0, sigma=0.6)
     system = System(nano)
 
     resource_package = nanoparticle_optimization.__name__
-    resource_path = '/'.join(('utils', '3nm_target-short.txt'))
+    resource_path = '/'.join(('utils', 'U_3nm.txt'))
     target = load(pkg_resources.resource_filename(resource_package, resource_path))
 
     target.separations /= 10.0
     optimization = Optimization(ff, system, target, configurations=2)
-    from scipy import optimize
-    optimization.optimize(verbose=True, threads=2)
+    optimization.optimize(verbose=True, maxiter=10, grid_spacing=3)
 
     '''
     import cProfile, pstats, io
