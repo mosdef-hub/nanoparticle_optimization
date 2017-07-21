@@ -29,6 +29,8 @@ class CG_nano(mb.Compound):
         r_CG = sigma / 2
         r_silica = 0.40323 / 2
 
+        r = r - r_CG + r_silica
+
         # N_approx = a(R/sigma)^2 + b(R/sigma) + c
         # Not an exact number but very close
         a = 9.4379
@@ -47,7 +49,7 @@ class CG_nano(mb.Compound):
             check = self._check_overlap(points, r_CG)
             check_high = self._check_overlap(points_high, r_CG)
             if check == False and check_high == True:
-                points = _fast_sphere_pattern(mid, r - r_CG + r_silica)
+                points = _fast_sphere_pattern(mid, r)
                 opt_points = mid
             elif check == True:
                 max_points = mid - 1
@@ -55,7 +57,7 @@ class CG_nano(mb.Compound):
                 min_points = mid + 1
 
         for i, pos in enumerate(points):
-            particle = mb.Compound(name="CG", pos=pos)
+            particle = mb.Compound(name="_CG", pos=pos)
             self.add(particle, "CG_{}".format(i))
 
     def _check_overlap(self, points, radius):
@@ -72,5 +74,5 @@ class CG_nano(mb.Compound):
 
 
 if __name__ == "__main__":
-    cg_nano = CG_nano(r=8.0, sigma=0.6)
-    cg_nano.save('test-fast.mol2', overwrite=True)
+    cg_nano = CG_nano(r=6.0, sigma=1.0)
+    cg_nano.save('r6-sigma1.0-noshift.mol2', overwrite=True)
