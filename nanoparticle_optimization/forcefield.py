@@ -64,6 +64,31 @@ class Mie(Forcefield):
     def constr1(self):
         return self.n > self.m
 
+class LJ_general(Forcefield):
+    def __init__(self, sigma, epsilon, n, m):
+        self.sigma = sigma
+        self.epsilon = epsilon
+        self.n = n
+        self.m = m
+
+        super(LJ_general, self).__init__()
+
+        self.add_constraint(self.constr1)
+
+    def calc_potential(self, r):
+        if not hasattr(r, "__iter__"):
+            r = [r]
+
+        sigma = self.sigma.value
+        epsilon = self.epsilon.value
+        n = self.n.value
+        m = self.m.value
+
+        return 4.0 * epsilon * (((sigma/r) ** n) - ((sigma/r) ** m))
+
+    def constr1(self):
+        return self.n > self.m
+
 class VDW(Forcefield):
     def __init__(self, C, m):
         self.C = C
