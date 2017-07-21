@@ -1,5 +1,6 @@
 from copy import deepcopy
 from random import random
+import time
 
 from numba import jit
 import numpy as np
@@ -53,17 +54,28 @@ class System(object):
         return np.sum(forcefield.calc_potential(dists))
 
     @jit
-    def calc_potential_single_state_fast(self, forcefield):
+    def calc_potential_single_state_fast(self, forcefield, cut=None):
         xyz1 = self.xyz
         xyz2 = self.xyz2
 
         dists = np.ravel(distance.cdist(xyz1, xyz2, 'euclidean'))
+        if cut:
+            dists = dists[dists <= cut]
 
         return np.sum(forcefield.calc_potential(dists))
 
     def calc_potential(self, forcefield, separations, configurations=50,
-                       trajectory=False, frequency=5):
+                       trajectory=False, cut=None, frequency=5,
+                       r_dependent_sampling=False):
         """
+        Parameters
+        ----------
+        r_dependent_sampling : bool, optional (default=False)
+            If True, sampling will be dependent on the separation of the two
+            nanoparticles.  The specified number of configurations will only
+            be used at the lowest separation, with the remaining separations
+            featuring only a single configuration.
+
         Returns
         -------
         U : list of tuples of floats, size = (n,2)
@@ -79,6 +91,8 @@ class System(object):
 
         for sep in separations:
             U_sep = []
+            if r_dependent_sampling and len(U) == 1:
+                configurations = 1
             for i, config in enumerate(range(configurations)):
                 if i == 0:
                     self.generate_configuration(separation=sep)
@@ -87,16 +101,18 @@ class System(object):
                 if trajectory and i % frequency == 0:
                     U_local = self.calc_potential_single_state(forcefield, trajectory)
                 else:
-                    U_local = self.calc_potential_single_state_fast(forcefield)
+                    U_local = self.calc_potential_single_state_fast(forcefield,
+                        cut=cut)
                 U_sep.append(U_local)
             U.append((np.mean(U_sep), np.std(U_sep)))
 
         return U
 
-    def calc_error(self, forcefield, target, configurations=50, norm=True):
+    def calc_error(self, forcefield, target, configurations=50, norm=True, cut=None,
+                   r_dependent_sampling=False):
         U = [potential[0] for potential in self.calc_potential(forcefield, 
-                                                separations=target.separations,
-                                                configurations=configurations)]
+             separations=target.separations, configurations=configurations, cut=cut,
+             r_dependent_sampling=r_dependent_sampling)]
         error = sum(abs(target.potential - U))
         if norm:
             error /= sum(abs(target.potential) + abs(np.asarray(U)))
