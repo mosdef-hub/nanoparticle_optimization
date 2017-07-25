@@ -126,6 +126,23 @@ class Optimization(object):
             param.fixed])
         return self._residual(values, *param_names)
 
+    def plot_heatmap(self, filename):
+        # TODO: Warn if forcefield contains more than 2 parameters
+        # TODO: Gather names of x and y variables from forcefield
+        import matplotlib.pyplot as plt
+
+        x = self.grid[0]
+        x_spacing = x[1,0] - x[0,0]
+        x -= x_spacing/2
+        y = self.grid[1]
+        y_spacing = y[0,0] - y[0,1]
+        y -= y_spacing/2
+
+        plt.pcolormesh(x, y, self.grid_residuals, cmap='viridis_r')
+        plt.colorbar(label='Residual')
+        plt.tight_layout()
+        plt.savefig(filename)
+
 if __name__ == "__main__":
     import pkg_resources
 
