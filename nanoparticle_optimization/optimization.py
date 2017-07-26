@@ -129,6 +129,7 @@ class Optimization(object):
     def plot_heatmap(self, filename):
         # TODO: Warn if forcefield contains more than 2 parameters
         # TODO: Gather names of x and y variables from forcefield
+        # TODO: Add `show` argument to show heatmaps in Jupyter notebooks
         import matplotlib.pyplot as plt
 
         x = self.grid[0]
