@@ -9,11 +9,10 @@ import numpy as np
 class Forcefield(object):
     """A metaclass for a Forcefield object
 
-    Forcefield is a metaclass that provides the framework for various
-    force fields. Two abstract methods `calc_potential` and `add_constraint`
-    are defined, which should be overridden when inheriting from this class.
-    Several 'magic' functions are also overridden to provide smoother
-    functionality.
+    `Forcefield` is a metaclass that provides the framework for defining
+    various force fields. Two abstract methods `calc_potential` and
+    `add_constraint` are defined, which should be overridden when inheriting
+    from this class.
 
     Attributes
     ----------
@@ -29,10 +28,22 @@ class Forcefield(object):
     @abstractmethod
     def calc_potential(self, r):
         """Potential energy as a function of separation
+
+        Parameters
+        ----------
+        r : list-like of floats
+            List of inter-particle distance values
         """
         pass
 
     def add_constraint(self, constraint):
+        """Add a constraint to the force field
+
+        Parameters
+        ----------
+        constraint : function returning a boolean
+            A function defining a constraint on force field parameters.
+        """
         self.constraints.append(constraint)
 
     def __getitem__(self, selection):
@@ -251,11 +262,3 @@ class Parameter(object):
 
     def __ge__(self, other):
         return self.value >= other.value
-
-if __name__ == "__main__":
-    sigma = Parameter(value=0.8, upper=1.2, lower=0.6)
-    epsilon = Parameter(value=0.4, upper=0.6, lower=0.3)
-    n = Parameter(value=12, upper=25, lower=10)
-    m = Parameter(value=20, fixed=True)
-
-    ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
