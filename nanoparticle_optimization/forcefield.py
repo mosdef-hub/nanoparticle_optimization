@@ -3,17 +3,33 @@ from __future__ import division
 from abc import ABCMeta, abstractmethod
 from six import string_types
 
-from numba import jit
 import numpy as np
 
 
 class Forcefield(object):
+    """A metaclass for a Forcefield object
+
+    Forcefield is a metaclass that provides the framework for various
+    force fields. Two abstract methods `calc_potential` and `add_constraint`
+    are defined, which should be overridden when inheriting from this class.
+    Several 'magic' functions are also overridden to provide smoother
+    functionality.
+
+    Attributes
+    ----------
+    constraints : list-like of functions
+        List of constraints on force field parameters. Each constraint should
+        should be a function that returns a boolean
+
+    """
     __metaclass__ = ABCMeta
     def __init__(self):
         self.constraints = []
 
     @abstractmethod
     def calc_potential(self, r):
+        """Potential energy as a function of separation
+        """
         pass
 
     def add_constraint(self, constraint):
@@ -38,6 +54,19 @@ class Forcefield(object):
         self.__dict__[key].value = value
 
 class Mie(Forcefield):
+    """Mie potential function
+
+    Parameters
+    ----------
+    sigma : float
+        Determines the location of the potential well
+    epsilon : float
+        Depth of the potential well
+    n : float
+        Repulsive exponent
+    m : float
+        Attractive exponent
+    """
     def __init__(self, sigma, epsilon, n, m):
         self.sigma = sigma
         self.epsilon = epsilon
@@ -62,10 +91,21 @@ class Mie(Forcefield):
         return C * epsilon * (((sigma/r) ** n) - ((sigma/r) ** m))
 
     def constr1(self):
+        """Constrain `n` to be larger than `m`
+        """
         return self.n > self.m
 
 
 class LJ(Forcefield):
+    """12-6 Lennard-Jones potential function
+
+    Parameters
+    ----------
+    sigma : float
+        Determines the location of the potential well
+    epsilon : float
+        Depth of the potential well
+    """
     def __init__(self, sigma, epsilon):
         self.sigma = sigma
         self.epsilon = epsilon
@@ -83,6 +123,19 @@ class LJ(Forcefield):
 
 
 class LJ_general(Forcefield):
+    """Generalized Lennard-Jones potential function
+
+    Parameters
+    ----------
+    sigma : float
+        Determines the location of the potential well
+    epsilon : float
+        Related to the depth of the potential well
+    n : float
+        Repulsive exponent
+    m : float
+        Attractive exponent
+    """
     def __init__(self, sigma, epsilon, n, m):
         self.sigma = sigma
         self.epsilon = epsilon
@@ -105,9 +158,18 @@ class LJ_general(Forcefield):
         return 4.0 * epsilon * (((sigma/r) ** n) - ((sigma/r) ** m))
 
     def constr1(self):
+        """Constrain `n` to be larger than `m`
+        """
         return self.n > self.m
 
 class VDW(Forcefield):
+    """van der Waals potential function
+
+    Parameters
+    ----------
+    C : float
+    m : float
+    """
     def __init__(self, C, m):
         self.C = C
         self.m = m
@@ -124,6 +186,13 @@ class VDW(Forcefield):
         return C / (r ** m)
 
 class Yukawa(Forcefield):
+    """Yukawa potential function
+
+    Parameters
+    ----------
+    C : float
+    kappa : float
+    """
     def __init__(self, C, kappa):
         self.C = C
         self.kappa = kappa
@@ -140,6 +209,19 @@ class Yukawa(Forcefield):
         return C * np.exp(-kappa * r) / r
 
 class Parameter(object):
+    """Defines a force field Parameter object
+
+    Parameters
+    ----------
+    value : float
+        The value of this parameter.
+    upper : float, optional, default=None
+        Defines an upper-bound for the Parameter value
+    lower : float, optional, default=None
+        Defines a lower-bound for the Parameter value
+    fixed : bool, optional, default=False
+        Whether or not a Parameter value should be fixed during optimization
+    """
     def __init__(self, value, upper=None, lower=None, fixed=False):
         super(Parameter, self).__init__()
 
