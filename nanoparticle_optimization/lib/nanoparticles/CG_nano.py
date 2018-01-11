@@ -23,7 +23,7 @@ def _fast_sphere_pattern(n, radius):
 
 class CG_nano(mb.Compound):
     """Coarse-grained nanoparticle class. """
-    def __init__(self, r=5.0, sigma=0.8):
+    def __init__(self, r=5.0, sigma=0.8, override=False):
         super(CG_nano, self).__init__()
 
         r_CG = sigma / 2
@@ -37,6 +37,12 @@ class CG_nano(mb.Compound):
         b = 0.6826
         c = -1.3333
         N_approx = a * ((r / sigma) ** 2) + b * (r / sigma) + c
+        if N_approx > 5e5 and not override:
+            raise Exception('The bead size and nanoparticle radius provided '
+                            'would result in a nanoparticle containing roughly '
+                            '{} particles. Perhaps you made a typo. If not, please '
+                            'rerun with the `override=True` argument.'
+                            ''.format(N_approx))
 
         # Binary search algorithm to find maximum number of CG beads w/o overlaps
         min_points = max(N_approx - 500, 1)
