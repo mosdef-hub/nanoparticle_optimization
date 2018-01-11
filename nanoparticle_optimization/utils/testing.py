@@ -6,9 +6,7 @@ import numpy as np
 from scipy.stats import linregress
 
 import nanoparticle_optimization
-from nanoparticle_optimization.lib.CG_nano import CG_nano
-from nanoparticle_optimization.system import System
-from nanoparticle_optimization.target import load
+from nanoparticle_optimization import CG_nano, System, load_target
 
 
 def calc_fit(U_target, U_cg):
