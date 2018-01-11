@@ -33,7 +33,7 @@ class Optimization(object):
         self.grid = None
         self.grid_residuals = None
 
-    def optimize(self, brute_force=True, verbose=False, grid_spacing=10,
+    def optimize(self, brute_force=True, verbose=False, gridpoints=10,
                  polishing_function=fmin, threads=1, cut=None, 
                  r_dependent_sampling=False, **kwargs):
         """ Optimize force field parameters via potential matching
@@ -57,8 +57,8 @@ class Optimization(object):
         verbose : bool, optional, default=False
             Output the value of the parameters to be optimized at each
             point in the optimization.
-        grid_spacing : int, optional, default=10
-            The number of grid points along each axis.  Only necessary when
+        gridpoints : int, optional, default=10
+            The number of gridpoints along each axis.  Only necessary when
             brute_force is True.
         polishing_function : callable, optional, default=scipy.optimize.fmin
             "Polishing" function that uses the result of the brute force
@@ -77,12 +77,12 @@ class Optimization(object):
                 self.forcefield if not param.fixed)
             if threads == 1:
                 x0, fval, grid, Jout = brute(self._residual, ranges=limits,
-                    args=param_names, full_output=True, Ns=grid_spacing,
+                    args=param_names, full_output=True, Ns=gridpoints,
                     finish=polishing_function)
             else:
                 from .utils.parallel import parbrute
                 x0, fval, grid, Jout = parbrute(self._residual, ranges=limits,
-                    args=param_names, full_output=True, Ns=grid_spacing,
+                    args=param_names, full_output=True, Ns=gridpoints,
                     finish=polishing_function, threads=threads)
             self.grid = grid
             self.grid_residuals = Jout
@@ -143,46 +143,3 @@ class Optimization(object):
         plt.colorbar(label='Residual')
         plt.tight_layout()
         plt.savefig(filename)
-
-if __name__ == "__main__":
-    import pkg_resources
-
-    import nanoparticle_optimization
-    from nanoparticle_optimization.forcefield import Mie, Parameter
-    from nanoparticle_optimization.lib.CG_nano import CG_nano
-    from nanoparticle_optimization.system import System
-    from nanoparticle_optimization.target import load
-
-    sigma = Parameter(value=0.6, fixed=True)
-    epsilon = Parameter(value=4.0, upper=15.0, lower=1.0)
-    n = Parameter(value=18.0, upper=25.0, lower=5.0)
-    m = Parameter(value=6.0, upper=10.0, lower=2.0)
-    ff = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
-
-    nano = CG_nano(3.0, sigma=0.6)
-    system = System(nano)
-
-    resource_package = nanoparticle_optimization.__name__
-    resource_path = '/'.join(('utils', 'U_3nm.txt'))
-    target = load(pkg_resources.resource_filename(resource_package, resource_path))
-
-    target.separations /= 10.0
-    optimization = Optimization(ff, system, target, configurations=2)
-    optimization.optimize(verbose=True, maxiter=10, grid_spacing=3)
-
-    '''
-    import cProfile, pstats, io
-    pr = cProfile.Profile()
-    pr.enable()
-    '''
-
-    #optimization.driver()
-
-    '''
-    pr.disable()
-    s = io.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
-    '''
