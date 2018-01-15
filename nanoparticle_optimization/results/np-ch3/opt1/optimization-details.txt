@@ -1,0 +1,12 @@
+force field             Mie
+grid points             8
+configurations          100
+r_dependent_sampling    False
+
+parameter range
+    epsilon (kcal/mol)  0.1, 1.0
+    m (unitless)        5.0, 7.0
+    n (unitless)        12.0, 45.0
+
+polishing function      Nelder-Mead (scipy.fmin)
+maxiter                 50
