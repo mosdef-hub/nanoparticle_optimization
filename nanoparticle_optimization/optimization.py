@@ -68,13 +68,13 @@ class Optimization(object):
         self.r_dependent_sampling = r_dependent_sampling
         if verbose:
             self.verbose = True
-        param_names = tuple(name for name, param in self.forcefield if not 
-            param.fixed)
+        params = sorted([param for param in self.forcefield if not param[1].fixed],
+                        key=lambda param: param[0])
+        param_names = tuple(param[0] for param in params)
         if polishing_function:
             polishing_function = partial(polishing_function, **kwargs)
         if brute_force:
-            limits = tuple((param.lower, param.upper) for name, param in 
-                self.forcefield if not param.fixed)
+            limits = tuple((param[1].lower, param[1].upper) for param in params)
             if threads == 1:
                 x0, fval, grid, Jout = brute(self._residual, ranges=limits,
                     args=param_names, full_output=True, Ns=gridpoints,
@@ -87,16 +87,16 @@ class Optimization(object):
             self.grid = grid
             self.grid_residuals = Jout
         else:
-            values = np.array([param.value for name, param in self.forcefield if not 
-                param.fixed])
+            values = np.array([param[1].value for param in params])
             opt_result = polishing_function(self._residual, x0=values,
                 args=param_names)
         self.verbose = False
 
     def _residual(self, values, *param_names):
         if not param_names:
-            param_names = tuple(name for name, param in self.forcefield if not 
-            param.fixed)
+            params = sorted([param for param in self.forcefield
+                             if not param[1].fixed], key=lambda param: param[0])
+            param_names = tuple(param[0] for param in params)
         for param_name, value in zip(param_names, values):
             self.forcefield[param_name] = value
 
@@ -120,10 +120,10 @@ class Optimization(object):
         return residual
 
     def residual(self):
-        param_names = tuple(name for name, param in self.forcefield if not 
-            param.fixed)
-        values = np.array([param.value for name, param in self.forcefield if not 
-            param.fixed])
+        params = sorted([param for param in self.forcefield if not param[1].fixed],
+                        key=lambda param: param[0])
+        param_names = tuple(param[0] for param in params)
+        values = tuple(param[1].value for param in params)
         return self._residual(values, *param_names)
 
     def plot_heatmap(self, filename):
