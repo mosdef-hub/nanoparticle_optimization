@@ -1,7 +1,8 @@
 from __future__ import division
 
 import dill
-import pkg_resources
+import os
+from pkg_resources import resource_filename
 import sys
 
 import numpy as np
@@ -15,7 +16,7 @@ Statepoint
 ----------
 '''
 sigma_bead = 0.8
-target_radius = 5.0
+radius = 5.0
 
 '''
 --------------------
@@ -32,9 +33,9 @@ Load Target Data
 ----------------
 '''
 resource_package = np_opt.__name__
-resource_path = '/'.join(('utils', 'U_{}nm_truncated.txt'.format(int(radius))))
-target = np_opt.load_target(pkg_resources.resource_filename(resource_package,
-                                                            resource_path))
+target_path = os.path.join('utils', 'target_data', 'np_np', 'truncated',
+    'U_{}nm_truncated.txt'.format(int(radius)))
+target = np_opt.load_target(resource_filename(resource_package, target_path))
 target.separations /= 10 # Convert distances from angstroms to nanometers
 
 '''
