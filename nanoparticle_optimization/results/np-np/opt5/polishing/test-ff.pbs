@@ -1,0 +1,15 @@
+#!/bin/bash -l
+#PBS -q low
+#PBS -l nodes=1:ppn=16
+#PBS -l walltime=96:00:00
+#PBS -N test-ff
+#PBS -e test-ff.$PBS_JOBID.err
+#PBS -o test-ff.$PBS_JOBID.out
+#PBS -j oe
+#PBS -m abe
+#PBS -M andrew.z.summers@gmail.com
+#PBS -V
+
+cd $PBS_O_WORKDIR
+
+python -u test.py &> test.log

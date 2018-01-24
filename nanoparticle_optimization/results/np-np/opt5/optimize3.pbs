@@ -1,0 +1,26 @@
+#!/bin/bash -l
+#PBS -q low
+#PBS -l nodes=1:ppn=16
+#PBS -l walltime=96:00:00
+#PBS -N optimize-trial5c
+#PBS -e optimize-trial5c.$PBS_JOBID.err
+#PBS -o optimize-trial5c.$PBS_JOBID.out
+#PBS -j oe
+#PBS -m abe
+#PBS -M andrew.z.summers@gmail.com
+#PBS -V
+
+cd $PBS_O_WORKDIR
+
+cd brute/9nm
+python -u optimize-1.5.py &> optimize-sigma1.5.log &
+python -u optimize-1.6.py &> optimize-sigma1.6.log &
+python -u optimize-1.7.py &> optimize-sigma1.7.log &
+python -u optimize-1.8.py &> optimize-sigma1.8.log &
+
+cd ../10nm
+python -u optimize-1.1.py &> optimize-sigma1.1.log &
+python -u optimize-1.5.py &> optimize-sigma1.5.log &
+python -u optimize-2.0.py &> optimize-sigma2.0.log &
+
+wait
