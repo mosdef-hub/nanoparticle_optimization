@@ -44,18 +44,18 @@ for radius in radii:
 
 grid_residuals = np.sum(np.asarray(grid_residuals), axis=0)
 epsilon_vals = local_optimization.grid[0].flatten()
-n_vals = local_optimization.grid[2].flatten()
 m_vals = local_optimization.grid[1].flatten()
+n_vals = local_optimization.grid[2].flatten()
 
 epsilon_val = epsilon_vals[np.argmin(grid_residuals)]
-n_val = n_vals[np.argmin(grid_residuals)]
 m_val = m_vals[np.argmin(grid_residuals)]
+n_val = n_vals[np.argmin(grid_residuals)]
 
 sigma = np_opt.Parameter(value=sigma_bead, fixed=True)
 epsilon = np_opt.Parameter(value=epsilon_val, upper=4.0, lower=0.5)
 n = np_opt.Parameter(value=n_val, upper=35.0, lower=12.0)
 m = np_opt.Parameter(value=m_val, upper=7.0, lower=5.0)
-forcefield = Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
+forcefield = np_opt.Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
 optimization = np_opt.Optimization(forcefield=forcefield, systems=systems,
                                    targets=targets, configurations=10)
