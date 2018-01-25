@@ -13,8 +13,8 @@ import nanoparticle_optimization as np_opt
 Statepoint
 ----------
 '''
-sigma_bead = 2.0
-radii = [10, 25]
+sigma_bead = 3.0
+radii = [25]
 
 '''
 ------------------

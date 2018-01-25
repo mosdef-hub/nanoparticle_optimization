@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 import nanoparticle_optimization as np_opt
-from nanoparticle_optimization.testing import test_25nm
+from nanoparticle_optimization.utils.testing import test_25nm
 
 
 sigma = [0.4, 0.7, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]
@@ -21,17 +21,17 @@ e_popt, e_pcov = curve_fit(linear_fit, sigma, epsilon)
 log_fit = lambda x, a, b: a * np.log(x) + b
 m_popt, m_pcov = curve_fit(log_fit, sigma, m)
 
-n_test = [35, 40, 45, 50]
+n_test = [35, 45, 55, 65, 75, 85]
 
 forcefields = []
 for n in n_test:
+    sigma = 2.0
     epsilon = linear_fit(sigma, *e_popt)
     m = log_fit(sigma, *m_popt)
-    sigma = 2.0
     forcefield = np_opt.Mie(sigma=np_opt.Parameter(value=sigma, fixed=True),
                             epsilon=np_opt.Parameter(value=epsilon, fixed=True),
                             n=np_opt.Parameter(value=n, fixed=True),
                             m=np_opt.Parameter(value=m, fixed=True))
     forcefields.append(forcefield)
 
-np_opt.test_25nm(forcefields, tag='cgff2')
+test_25nm(forcefields, tag='cgff2')
