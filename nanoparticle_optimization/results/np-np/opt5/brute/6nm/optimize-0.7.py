@@ -52,8 +52,8 @@ Define Force field Parameters and Bounds
 ----------------------------------------
 '''
 sigma = np_opt.Parameter(value=sigma_bead, fixed=True)
-m = np_opt.Parameter(value=6.0, upper=7.0, lower=3.0)
-epsilon = np_opt.Parameter(value=2.0, upper=8.0, lower=0.01)
+m = np_opt.Parameter(value=4.5, upper=5.25, lower=4.25)
+epsilon = np_opt.Parameter(value=1.0, upper=2.5, lower=0.5)
 n = np_opt.Parameter(value=35.0, fixed=True)
 forcefield = np_opt.Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
