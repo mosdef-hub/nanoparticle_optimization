@@ -1,0 +1,71 @@
+# Melting to 10000K following the procedure of Litton et al., J. App. Phys. 2001
+
+# Variable definitions
+variable t_amorph equal 10000
+variable t_lo equal 300
+variable seed equal 12345
+
+# Initialization
+units		real
+boundary	p p p
+atom_style	full
+dimension 	3
+processors 	* * *
+
+read_data	data.silica_box.txt
+
+# Use the ReaxFF forcefield, parameters from Fogarty et al., JCP 2010
+pair_style reax/c NULL checkqeq yes
+pair_coeff * * ffield.reax Si O
+
+# Initial charge equilibration so our system doesn't blow up
+fix chrg all qeq/reax 1 0.0 10.0 1.0e-3 reax/c
+thermo 100
+run 1000
+
+# Energy minimization to make the system a bit happier
+minimize 1.0e-4 1.0e-6 1 10
+
+# Initialize velocities at room temp
+velocity all create ${t_lo} ${seed} dist gaussian
+
+reset_timestep 0
+
+neighbor 2.0 bin
+neigh_modify check yes
+
+timestep	0.1
+
+compute pe_eq all pe
+fix	pe_log all ave/time 1 100 100 c_pe_eq file SiO2_eq_pe.txt
+
+# Run NVT at room temp for a bit longer to minimize energy
+fix		integrator	all nvt	temp	${t_lo} ${t_lo} 100
+
+dump		traj_eq all atom 100 SiO2_eq.lammpstrj
+
+restart 10000 restart.SiO2_box.*
+
+run 10000
+
+write_data data.silica_box_relaxed.txt
+
+unfix integrator
+undump traj_eq
+uncompute pe_eq
+unfix pe_log
+
+# Heat to 10000K
+timestep 0.5
+fix		integrator	all nvt	temp	${t_lo} ${t_amorph} 100
+
+compute pe_melt all pe
+compute etot_melt all etotal
+compute t_melt all temp
+fix	pe_log all ave/time 1 100 100 c_pe_melt c_etot_melt c_t_melt file SiO2_melt_pe.txt
+
+dump		traj_eq all atom 500 SiO2_melt.lammpstrj
+
+run 40000
+
+write_restart restart.SiO2_10K_melt
