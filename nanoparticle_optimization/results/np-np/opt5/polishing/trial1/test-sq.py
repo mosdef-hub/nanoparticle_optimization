@@ -18,7 +18,7 @@ order2_fit = lambda x, a, b: a * x**2 + b * x
 e_popt, e_pcov = curve_fit(order2_fit, sigma, epsilon)
 m_popt, m_pcov = curve_fit(order1_fit, sigma, m)
 
-sigma_test = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0, 5.0]
+sigma_test = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0, 5.0]
 
 forcefields = []
 for sigma in sigma_test:

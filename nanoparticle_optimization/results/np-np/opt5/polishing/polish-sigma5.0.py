@@ -50,9 +50,9 @@ epsilon_val = epsilon_vals[np.argmin(grid_residuals)]
 m_val = m_vals[np.argmin(grid_residuals)]
 
 sigma = np_opt.Parameter(value=sigma_bead, fixed=True)
-epsilon = np_opt.Parameter(value=epsilon_val, upper=8.0, lower=0.01)
+epsilon = np_opt.Parameter(value=epsilon_val, upper=80.0, lower=40.0)
 n = np_opt.Parameter(value=35.0, fixed=True)
-m = np_opt.Parameter(value=m_val, upper=7.0, lower=3.0)
+m = np_opt.Parameter(value=m_val, upper=10.0, lower=8.0)
 forcefield = np_opt.Mie(sigma=sigma, epsilon=epsilon, n=n, m=m)
 
 optimization = np_opt.Optimization(forcefield=forcefield, systems=systems,
