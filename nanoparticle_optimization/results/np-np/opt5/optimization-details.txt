@@ -1,9 +1,0 @@
-force field             Mie
-grid points             25
-configurations          10
-r_dependent_sampling    True
-
-parameter range
-    epsilon (kcal/mol)  0.01, 8.0
-    m (unitless)        3.0, 7.0
-    n (unitless)        35.0 (fixed)
