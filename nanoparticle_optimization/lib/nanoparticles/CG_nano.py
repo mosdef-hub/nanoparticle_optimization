@@ -125,7 +125,6 @@ class CG_nano(mb.Compound):
                                      'again.')
                 points = self._fast_sphere_pattern(mid, shell_radius)
                 test_bvf = self._calc_bvf(points, bead_radius, shell_radius)
-                print(bvf, test_bvf, max_points, min_points)
                 if round(test_bvf, 2) == round(bvf, 2):
                     points = self._fast_sphere_pattern(mid, shell_radius)
                     opt_points = mid
