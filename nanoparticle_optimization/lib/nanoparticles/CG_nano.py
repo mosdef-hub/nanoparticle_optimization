@@ -1,11 +1,13 @@
 from __future__ import division
 
+import itertools
 from math import ceil, isclose
 
 import mbuild as mb
 import numpy as np
 from scipy.spatial import distance
 
+from nanoparticle_optimization.utils.exceptions import BuildError
 
 
 class CG_nano(mb.Compound):
@@ -73,11 +75,11 @@ class CG_nano(mb.Compound):
         r_over_s = shell_radius / bead_diameter
         N_approx = a * (r_over_s ** 2) + b * r_over_s + c
         if N_approx > 5e5 and not force_build:
-            raise Exception('The bead size and nanoparticle radius provided '
-                            'would result in a nanoparticle containing roughly '
-                            '{} particles. Perhaps you made a typo. If not, please '
-                            'rerun with the `force_build=True` argument.'
-                            ''.format(N_approx))
+            raise BuildError('The bead size and nanoparticle radius provided '
+                             'would result in a nanoparticle containing roughly '
+                             '{} particles. Perhaps you made a typo. If not, please '
+                             'rerun with the `force_build=True` argument.'
+                             ''.format(N_approx))
 
         if not bvf:
             '''
@@ -116,14 +118,14 @@ class CG_nano(mb.Compound):
             while opt_points == 0:
                 mid = ceil((max_points + min_points) / 2)
                 if mid == last:
-                    raise Exception('Nanoparticle construction failed. This may '
-                                    'be due to the specified `bvf` being too '
-                                    'large or the absolute tolerance being too '
-                                    'small. Try altering these values and running '
-                                    'again.')
+                    raise BuildError('Nanoparticle construction failed. This may '
+                                     'be due to the specified `bvf` being too '
+                                     'large or the absolute tolerance being too '
+                                     'small. Try altering these values and running '
+                                     'again.')
                 points = self._fast_sphere_pattern(mid, shell_radius)
                 test_bvf = self._calc_bvf(points, bead_radius, shell_radius)
-                print(mid, min_points, max_points, bvf, test_bvf)
+                print(bvf, test_bvf, max_points, min_points)
                 if round(test_bvf, 2) == round(bvf, 2):
                     points = self._fast_sphere_pattern(mid, shell_radius)
                     opt_points = mid
@@ -161,6 +163,35 @@ class CG_nano(mb.Compound):
         else:
             return 0
 
+    @staticmethod
+    def _intersected(positions, radius):
+        """
+        Determine by trilateration if three spheres intersect
+
+        Adapted from:
+        https://stackoverflow.com/questions/1406375/finding-intersection-points-between-3-spheres
+        which was adapted from:
+        https://en.wikipedia.org/wiki/Trilateration
+        """
+        P1 = positions[0]
+        P2 = positions[1]
+        P3 = positions[2]
+        temp1 = P2 - P1
+        e_x = temp1 / np.linalg.norm(temp1)
+        temp2 = P3 - P1
+        i = np.dot(e_x, temp2)
+        temp3 = temp2 - i * e_x
+        e_y = temp3 / np.linalg.norm(temp3)
+        e_z = np.cross(e_x, e_y)
+        d = np.linalg.norm(P2 - P1)
+        j = np.dot(e_y, temp2)                                   
+        x = d / 2
+        y = (-2*i*x + i*i + j*j) / (2*j)
+        temp4 = radius**2 - x*x - y*y
+        if temp4 < 0:
+            return False
+        return True
+
     def _check_overlap(self, points, radius):
         """ Determines if there is any overlap for a set of spheres
 
@@ -187,17 +218,33 @@ class CG_nano(mb.Compound):
             Radius of spheres
         """
         dists = distance.cdist(points, points, 'euclidean')
-        dists = dists[np.nonzero(dists)]
 
-        print(len(dists[dists < bead_radius * 2]), len(points) * 2)
-        if len(dists[dists < bead_radius * 2]) > len(points) * 2:
-            return 1.0
+        '''
+        Check for intersection. If three spheres intersect we cannot
+        (easily) accurately determine the shared volume and therefore
+        cannot calculate the bead volume fraction.
+        '''
+        for i, point_distances in enumerate(dists):
+            overlaps = np.where(np.logical_and(np.less(point_distances,
+                bead_radius * 2), np.not_equal(point_distances, 0)))[0]
+            for combo in itertools.combinations(overlaps, 2):
+                positions = [points[idx] for idx in combo + (i,)]
+                if self._intersected(positions, bead_radius):
+                    return 1.0
+
+        dists = dists[np.nonzero(dists)]
 
         r_min = shell_radius - bead_radius
         r_max = shell_radius + bead_radius
         vol_shell = (4/3) * np.pi * (r_max**3 - r_min**3)
         vol_beads = len(points) * (4/3) * np.pi * bead_radius**3
+        '''
+        The total volume taken up by beads is the volume of all of the beads
+        minus the volume of the bead intersections. Since each bead-bead
+        distance will be present twice within `dists` we divide by two here
+        to compensate.
+        '''
         vol_overlap = np.sum([self._overlap_volume(bead_radius, dist)
-                              for dist in dists])
+                              for dist in dists]) / 2
 
         return (vol_beads - vol_overlap) / vol_shell
