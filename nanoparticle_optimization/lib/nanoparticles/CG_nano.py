@@ -68,12 +68,22 @@ class CG_nano(mb.Compound):
         number of particle to compose a nanoparticle as a function of radius and
         bead diameter. This value is not exact, but provides a good start for the
         binary search algorithm.
+
+        A similar procedure has been performed to estimate particle number for
+        specified bead volume fractions.
         '''
-        a = 9.4379
-        b = 0.6826
-        c = -1.3333
-        r_over_s = shell_radius / bead_diameter
-        N_approx = a * (r_over_s ** 2) + b * r_over_s + c
+        if not bvf:
+            a = 9.4379
+            b = 0.6826
+            c = -1.3333
+            r_over_s = shell_radius / bead_diameter
+            N_approx = int(a * (r_over_s ** 2) + b * r_over_s + c)
+        else:
+            a = 25.7010
+            b = -27.4485
+            c = 22.4832
+            r_over_s = shell_radius / bead_diameter
+            N_approx = int(bvf * (a * (r_over_s ** 2) + b * r_over_s + c))
         if N_approx > 5e5 and not force_build:
             raise BuildError('The bead size and nanoparticle radius provided '
                              'would result in a nanoparticle containing roughly '
@@ -106,13 +116,9 @@ class CG_nano(mb.Compound):
             '''
             Binary search algorithm to find the required number of beads to
             satisfy the specified fractional bead volume
-
-            Note: Need to approximate the number of beads as a function of
-                  fractional bead volume. For now we'll use a min of 1 and
-                  a max of 10000, but this will be quite inefficient.
             '''
-            min_points = 1
-            max_points = 10000
+            min_points = max(N_approx - 500, 1)
+            max_points = N_approx + 500
             opt_points = 0
             last = None
             while opt_points == 0:
