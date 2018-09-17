@@ -3,6 +3,8 @@ from __future__ import print_function
 
 from copy import deepcopy
 from functools import partial
+from math import ceil, floor
+from warnings import warn
 
 import numpy as np
 from scipy.optimize import brute, fmin
@@ -130,16 +132,42 @@ class Optimization(object):
         # TODO: Warn if forcefield contains more than 2 parameters
         # TODO: Gather names of x and y variables from forcefield
         # TODO: Add `show` argument to show heatmaps in Jupyter notebooks
+        # For now assuming first parameter is epsilon, second m, third n
         import matplotlib.pyplot as plt
 
-        x = self.grid[0]
-        x_spacing = x[1,0] - x[0,0]
-        x -= x_spacing/2
-        y = self.grid[1]
-        y_spacing = y[0,0] - y[0,1]
-        y -= y_spacing/2
+        if len(self.grid[0].shape) == 3:
+            warn('Three varying parameters detected. Plotting multiple '
+                 'heatmaps.')
+            unique_n = np.sort(np.unique(self.grid[2].flatten()))
+            fig, ax = plt.subplots(ceil(len(unique_n)**0.5),
+                                   floor(len(unique_n)**0.5),
+                                   figsize=(12, 12))
+            for i, (ax, n) in enumerate(zip(ax.reshape(-1), unique_n)):
+                x = self.grid[0, :, 0, 0]
+                y = self.grid[1, 0, :, 0]
+                ax.set_title('n={}'.format(n))
+                ax.set_xlabel(r'm')
+                ax.set_ylabel(r'$\epsilon$')
+                ax.pcolormesh(x, y, self.grid_residuals[:, :, i],
+                              cmap='viridis_r')
+            sm = plt.cm.ScalarMappable(cmap='viridis_r')
+            sm.set_array([])
+            cb_ax = fig.add_axes([0.925, 0.1, 0.02, 0.8])
+            cbar = fig.colorbar(sm, cax=cb_ax, label='Residual')
+            plt.subplots_adjust(hspace=0.65, wspace=0.5)
+            fig.savefig('test.pdf')
+        elif len(self.grid[0].shape) == 2:
+            x = self.grid[0]
+            x_spacing = x[1,0] - x[0,0]
+            x -= x_spacing/2
+            y = self.grid[1]
+            y_spacing = y[0,0] - y[0,1]
+            y -= y_spacing/2
 
-        plt.pcolormesh(x, y, self.grid_residuals, cmap='viridis_r')
-        plt.colorbar(label='Residual')
-        plt.tight_layout()
-        plt.savefig(filename)
+            plt.pcolormesh(x, y, self.grid_residuals, cmap='viridis_r')
+            plt.colorbar(label='Residual')
+            plt.tight_layout()
+            plt.savefig(filename)
+        else:
+            warn('Heatmap plotting is only supported for optimizations '
+                 'with 2 or 3 varying parameters.')
