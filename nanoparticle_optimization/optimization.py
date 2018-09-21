@@ -149,9 +149,9 @@ class Optimization(object):
                 x = self.grid[0, :, 0, 0]
                 y = self.grid[1, 0, :, 0]
                 ax.set_title('n={}'.format(n))
-                ax.set_xlabel(r'm')
+                ax.set_xlabel(r'$m$')
                 ax.set_ylabel(r'$\epsilon$')
-                ax.pcolormesh(x, y, self.grid_residuals[:, :, i],
+                ax.pcolormesh(y, x, self.grid_residuals[:, :, i],
                               cmap='viridis_r')
             sm = plt.cm.ScalarMappable(cmap='viridis_r')
             sm.set_array([])
