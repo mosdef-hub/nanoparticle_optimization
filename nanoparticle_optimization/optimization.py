@@ -3,6 +3,7 @@ from __future__ import print_function
 
 from copy import deepcopy
 from functools import partial
+import itertools
 from math import ceil, floor
 from warnings import warn
 
@@ -128,12 +129,14 @@ class Optimization(object):
         values = tuple(param[1].value for param in params)
         return self._residual(values, *param_names)
 
-    def plot_heatmap(self, filename):
+    def plot_heatmap(self, filename, draw_box=False):
         # TODO: Warn if forcefield contains more than 2 parameters
         # TODO: Gather names of x and y variables from forcefield
         # TODO: Add `show` argument to show heatmaps in Jupyter notebooks
         # For now assuming first parameter is epsilon, second m, third n
+        import matplotlib
         import matplotlib.pyplot as plt
+        import matplotlib.patches as patches
 
         if len(self.grid[0].shape) == 3:
             warn('Three varying parameters detected. Plotting multiple '
@@ -155,19 +158,51 @@ class Optimization(object):
             cb_ax = fig.add_axes([0.925, 0.1, 0.02, 0.8])
             cbar = fig.colorbar(sm, cax=cb_ax, label='Residual')
             plt.subplots_adjust(hspace=0.65, wspace=0.5)
-            fig.savefig('test.pdf')
+            fig.savefig(filename)
         elif len(self.grid[0].shape) == 2:
+            fig, ax = plt.subplots()
             x = self.grid[0]
-            x_spacing = x[1,0] - x[0,0]
-            x -= x_spacing/2
+            x_spacing = np.abs(x[1,0] - x[0,0])
             y = self.grid[1]
-            y_spacing = y[0,0] - y[0,1]
-            y -= y_spacing/2
+            y_spacing = np.abs(y[0,0] - y[0,1])
 
-            plt.pcolormesh(x, y, self.grid_residuals, cmap='viridis_r')
-            plt.colorbar(label='Residual')
-            plt.tight_layout()
-            plt.savefig(filename)
+            ax.set_xlabel(r'$\epsilon, \mathrm{\frac{kcal}{mol}}$')
+            ax.set_ylabel(r'$m$')
+            heatmap = ax.pcolormesh(x, y, self.grid_residuals, cmap='viridis_r', zorder=1)
+            minimum = np.array(np.unravel_index(self.grid_residuals.argmin(),
+                                                self.grid_residuals.shape))
+            if min(minimum) > 1 and max(minimum) < len(self.grid_residuals) - 1 and draw_box:
+                rectx = x[minimum[0] - 2][0]
+                recty = y[0][minimum[1] - 2]
+                rect = patches.Rectangle((rectx, recty), 4 * x_spacing,
+                                         4 * y_spacing, linewidth=4,
+                                         edgecolor='w', facecolor='none',
+                                         linestyle='-', zorder=3)
+                ax.add_patch(rect)
+                rect2 = patches.Rectangle((rectx, recty), 4 * x_spacing,
+                                         4 * y_spacing, linewidth=2,
+                                         edgecolor='k', facecolor='none',
+                                         linestyle='-', zorder=3)
+                ax.add_patch(rect2)
+            viridis_r = matplotlib.cm.get_cmap('viridis_r')
+            ax.plot(x[minimum[0]][0],
+                    y[0][minimum[1]],
+                    color=viridis_r(self.grid_residuals.min()),
+                    markersize=10 * 17/len(self.grid_residuals),
+                    mew=1, mec='k', marker='o', zorder=6)
+            ax.set_xticks(np.unique(x), minor=True)
+            ax.set_yticks(np.unique(y), minor=True)
+            ax.set_xlim(np.min(x), np.max(x))
+            ax.set_ylim(np.min(y), np.max(y))
+            ax.grid(color='w', linestyle='-', linewidth=0.5, which='minor',
+                    zorder=2)
+            points = np.array(list(itertools.product(np.unique(x), np.unique(y))))
+            ax.scatter(x, y, c='w', s=20, zorder=4)
+            ax.scatter(x, y, c=self.grid_residuals, s=6, cmap='viridis_r',
+                       zorder=5)
+            fig.colorbar(heatmap, label='Residual')
+            fig.tight_layout()
+            fig.savefig(filename)
         else:
             warn('Heatmap plotting is only supported for optimizations '
                  'with 2 or 3 varying parameters.')
