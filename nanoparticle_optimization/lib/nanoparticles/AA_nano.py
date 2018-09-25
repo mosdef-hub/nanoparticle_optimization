@@ -6,7 +6,7 @@ import mbuild as mb
 import numpy as np
 from scipy.spatial import distance
 
-from silica import Silica
+from .silica import Silica
 
 class AA_nano(mb.Compound):
     def __init__(self, radius=2.0, O_layer=False):
