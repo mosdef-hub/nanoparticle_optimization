@@ -141,7 +141,7 @@ class CG_nano(mb.Compound):
                 last = mid
 
         for i, pos in enumerate(points):
-            particle = mb.Compound(name="_CG", pos=pos)
+            particle = mb.Compound(name="_CGN", pos=pos)
             self.add(particle, "CG_{}".format(i))
 
     @staticmethod

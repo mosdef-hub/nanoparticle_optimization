@@ -138,6 +138,8 @@ class Optimization(object):
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
 
+        cmap = 'Blues_r'
+
         if len(self.grid[0].shape) == 3:
             warn('Three varying parameters detected. Plotting multiple '
                  'heatmaps.')
@@ -152,15 +154,15 @@ class Optimization(object):
                 ax.set_xlabel(r'$m$')
                 ax.set_ylabel(r'$\epsilon$')
                 ax.pcolormesh(y, x, self.grid_residuals[:, :, i],
-                              cmap='viridis_r')
-            sm = plt.cm.ScalarMappable(cmap='viridis_r')
+                              cmap=cmap)
+            sm = plt.cm.ScalarMappable(cmap=cmap)
             sm.set_array([])
             cb_ax = fig.add_axes([0.925, 0.1, 0.02, 0.8])
             cbar = fig.colorbar(sm, cax=cb_ax, label='Residual')
             plt.subplots_adjust(hspace=0.65, wspace=0.5)
             fig.savefig(filename)
         elif len(self.grid[0].shape) == 2:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(7, 6))
             x = self.grid[0]
             x_spacing = np.abs(x[1,0] - x[0,0])
             y = self.grid[1]
@@ -168,38 +170,45 @@ class Optimization(object):
 
             ax.set_xlabel(r'$\epsilon, \mathrm{\frac{kcal}{mol}}$')
             ax.set_ylabel(r'$m$')
-            heatmap = ax.pcolormesh(x, y, self.grid_residuals, cmap='viridis_r', zorder=1)
+            heatmap = ax.pcolormesh(x, y, self.grid_residuals, cmap=cmap,
+                                    zorder=1, shading='gouraud')
             minimum = np.array(np.unravel_index(self.grid_residuals.argmin(),
                                                 self.grid_residuals.shape))
             if min(minimum) > 1 and max(minimum) < len(self.grid_residuals) - 1 and draw_box:
                 rectx = x[minimum[0] - 2][0]
                 recty = y[0][minimum[1] - 2]
                 rect = patches.Rectangle((rectx, recty), 4 * x_spacing,
-                                         4 * y_spacing, linewidth=4,
+                                         4 * y_spacing, linewidth=2,
                                          edgecolor='w', facecolor='none',
-                                         linestyle='-', zorder=3)
+                                         linestyle='-', zorder=4)
                 ax.add_patch(rect)
                 rect2 = patches.Rectangle((rectx, recty), 4 * x_spacing,
-                                         4 * y_spacing, linewidth=2,
+                                         4 * y_spacing, linewidth=1,
                                          edgecolor='k', facecolor='none',
-                                         linestyle='-', zorder=3)
+                                         linestyle='-', zorder=5)
                 ax.add_patch(rect2)
-            viridis_r = matplotlib.cm.get_cmap('viridis_r')
+            #viridis_r = matplotlib.cm.get_cmap(cmap)
+            '''
             ax.plot(x[minimum[0]][0],
                     y[0][minimum[1]],
                     color=viridis_r(self.grid_residuals.min()),
                     markersize=10 * 17/len(self.grid_residuals),
                     mew=1, mec='k', marker='o', zorder=6)
+            '''
+            '''
             ax.set_xticks(np.unique(x), minor=True)
             ax.set_yticks(np.unique(y), minor=True)
+            '''
             ax.set_xlim(np.min(x), np.max(x))
             ax.set_ylim(np.min(y), np.max(y))
+            '''
             ax.grid(color='w', linestyle='-', linewidth=0.5, which='minor',
                     zorder=2)
+            '''
             points = np.array(list(itertools.product(np.unique(x), np.unique(y))))
-            ax.scatter(x, y, c='w', s=20, zorder=4)
-            ax.scatter(x, y, c=self.grid_residuals, s=6, cmap='viridis_r',
-                       zorder=5)
+            ax.scatter(x, y, c='k', s=75, zorder=2)
+            ax.scatter(x, y, c=self.grid_residuals, s=40, cmap=cmap,
+                       zorder=3)
             fig.colorbar(heatmap, label='Residual')
             fig.tight_layout()
             fig.savefig(filename)

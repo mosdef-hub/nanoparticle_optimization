@@ -4,8 +4,7 @@ import mbuild as mb
 import numpy as np
 
 from nanoparticle_optimization.lib.chains import Alkane
-from nanoparticle_optimization.lib.nanoparticles import AA_nano
-from nanoparticle_optimization import CG_nano
+from nanoparticle_optimization import AA_nano, CG_nano
 
 
 class TNP(mb.Compound):
@@ -71,9 +70,32 @@ class TNP(mb.Compound):
         self.label_rigid_bodies(rigid_particles=core_particles)
         for bond in self.bonds():
             if(bond[0].name in ['AA_nano', 'CG_nano'] or
-                    bond[1].name in ['AA_nano', 'CG_nano']:
+                    bond[1].name in ['AA_nano', 'CG_nano']):
                 if 'nano' in bond[0].name:
                     bond[1].rigid_id = 0
                 if 'nano' in bond[1].name:
                     bond[0].rigid_id = 0
                 self.remove_bond(bond)
+
+if __name__ == "__main__":
+    radius = 4
+    chain_density = 1.0
+    chain_length = 36
+    bead_diameter = 0.6
+    bvf = 0.4
+    aa_tnp = TNP(radius=radius, chain_density=chain_density,
+                 chain_length=chain_length, core_fidelity='AA',
+                 chain_fidelity='UA')
+    aa_tnp.save('aa-tnp.mol2', overwrite=True)
+    '''
+    ua_tnp = TNP(radius=radius, chain_density=chain_density,
+                 chain_length=chain_length, core_fidelity='CG',
+                 chain_fidelity='UA', bead_diameter=bead_diameter,
+                 bvf=bvf)
+    ua_tnp.save('ua-tnp.mol2', overwrite=True)
+    cg_tnp = TNP(radius=radius, chain_density=chain_density,
+                 chain_length=chain_length, core_fidelity='CG',
+                 chain_fidelity='CG', bead_diameter=bead_diameter,
+                 bvf=bvf)
+    cg_tnp.save('cg-tnp.mol2', overwrite=True)
+    '''
