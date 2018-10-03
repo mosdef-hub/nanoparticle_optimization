@@ -65,7 +65,7 @@ class TNP(mb.Compound):
 
         for position in pattern.points:
             port = mb.Port(anchor=self['core'], orientation=position,
-                           separation=radius)
+                    separation=radius + silica_radius + chain_bead_radius)
             self['core'].add(port, "attachment_site[$]")
 
         chains, _ = pattern.apply_to_compound(chain_prototype,
