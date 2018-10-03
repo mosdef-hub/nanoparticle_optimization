@@ -56,7 +56,12 @@ class TNP(mb.Compound):
         surface_area = 4.0 * np.pi * radius ** 2.0
         n_chains = int(chain_density * surface_area)
         pattern = mb.SpherePattern(n_chains)
-        pattern.scale(radius)
+        silica_radius = 0.201615
+        if chain_fidelity == 'ua':
+            chain_bead_radius = 0.395 / 2
+        else:
+            chain_bead_radius = 0.4582 / 2
+        pattern.scale(radius + silica_radius + chain_bead_radius)
 
         for position in pattern.points:
             port = mb.Port(anchor=self['core'], orientation=position,
