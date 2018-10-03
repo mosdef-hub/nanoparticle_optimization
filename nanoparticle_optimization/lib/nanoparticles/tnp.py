@@ -57,7 +57,7 @@ class TNP(mb.Compound):
         n_chains = int(chain_density * surface_area)
         pattern = mb.SpherePattern(n_chains)
         silica_radius = 0.201615
-        if chain_fidelity == 'ua':
+        if chain_fidelity == 'UA':
             chain_bead_radius = 0.395 / 2
         else:
             chain_bead_radius = 0.4582 / 2
