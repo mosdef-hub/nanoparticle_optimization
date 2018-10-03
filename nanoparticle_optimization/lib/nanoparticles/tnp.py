@@ -61,11 +61,23 @@ class TNP(mb.Compound):
             chain_bead_radius = 0.395 / 2
         else:
             chain_bead_radius = 0.4582 / 2
-        pattern.scale(radius + silica_radius + chain_bead_radius)
+        port_separation = np.linalg.norm(chain_prototype['up'].pos - \
+                                chain_prototype['up'].anchor.pos)
+        pattern.scale(radius + silica_radius + chain_bead_radius - \
+                      port_separation)
+
+        '''
+        Chains are placed such that the end bead closest to the
+        nanoparticle core is located at R + sigma from the nanoparticle
+        center, where R is the nanoparticle radius and sigma is the
+        arithmetic average of the CG pseudo-atom diameter and the chain
+        end bead diameter.
+        '''
 
         for position in pattern.points:
             port = mb.Port(anchor=self['core'], orientation=position,
-                    separation=radius + silica_radius + chain_bead_radius)
+                    separation=radius + silica_radius + \
+                               chain_bead_radius - port_separation)
             self['core'].add(port, "attachment_site[$]")
 
         chains, _ = pattern.apply_to_compound(chain_prototype,
