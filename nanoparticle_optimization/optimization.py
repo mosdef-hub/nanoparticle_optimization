@@ -117,7 +117,7 @@ class Optimization(object):
         for system, target in zip(self.systems, self.targets):
             residual += system.calc_error(self.forcefield, target,
                 configurations=self.configurations, norm=self.normalize_error,
-                cut=self.cut, r_dependent_sampling=self.r_dependent_sampling, sample_until=sample_until)
+                cut=self.cut, r_dependent_sampling=self.r_dependent_sampling, sample_until=self.sample_until)
         if self.verbose:
             for param_name, value in zip(param_names, values):
                 print('{}: {}\n'.format(param_name, value))
