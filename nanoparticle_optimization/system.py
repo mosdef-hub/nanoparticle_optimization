@@ -66,7 +66,7 @@ class System(object):
 
     def calc_potential(self, forcefield, separations, configurations=50,
                        trajectory=False, cut=None, frequency=5,
-                       r_dependent_sampling=False):
+                       r_dependent_sampling=False, sample_until=0.1):
         """
         Parameters
         ----------
@@ -89,9 +89,10 @@ class System(object):
         if trajectory:
             open(trajectory, 'w')
 
+        min_sep = separations[0]
         for sep in separations:
             U_sep = []
-            if r_dependent_sampling and len(U) == 1:
+            if r_dependent_sampling and sep - min_sep > sample_until:
                 configurations = 1
             for i, config in enumerate(range(configurations)):
                 if i == 0:
@@ -109,10 +110,10 @@ class System(object):
         return U
 
     def calc_error(self, forcefield, target, configurations=50, norm=True, cut=None,
-                   r_dependent_sampling=False):
+                   r_dependent_sampling=False, sample_until=0.1):
         U = [potential[0] for potential in self.calc_potential(forcefield, 
              separations=target.separations, configurations=configurations, cut=cut,
-             r_dependent_sampling=r_dependent_sampling)]
+             r_dependent_sampling=r_dependent_sampling, sample_until=sample_until)]
         error = sum(abs(target.potential - U))
         if norm:
             error /= sum(abs(target.potential) + abs(np.asarray(U)))

@@ -28,6 +28,7 @@ class Optimization(object):
         self.forcefield = forcefield
         self.normalize_error = normalize_error
         self.r_dependent_sampling = False
+        self.sample_until = 0.1
         self.systems = systems
         self.targets = targets
 
@@ -38,7 +39,7 @@ class Optimization(object):
 
     def optimize(self, brute_force=True, verbose=False, gridpoints=10,
                  polishing_function=fmin, threads=1, cut=None, 
-                 r_dependent_sampling=False, **kwargs):
+                 r_dependent_sampling=False, sample_until=0.1, **kwargs):
         """ Optimize force field parameters via potential matching
 
         Force field parameters are optimized by matching the interaction potential
@@ -69,6 +70,7 @@ class Optimization(object):
         """
         self.cut = cut
         self.r_dependent_sampling = r_dependent_sampling
+        self.sample_until = sample_until
         if verbose:
             self.verbose = True
         params = sorted([param for param in self.forcefield if not param[1].fixed],
@@ -115,7 +117,7 @@ class Optimization(object):
         for system, target in zip(self.systems, self.targets):
             residual += system.calc_error(self.forcefield, target,
                 configurations=self.configurations, norm=self.normalize_error,
-                cut=self.cut, r_dependent_sampling=self.r_dependent_sampling)
+                cut=self.cut, r_dependent_sampling=self.r_dependent_sampling, sample_until=sample_until)
         if self.verbose:
             for param_name, value in zip(param_names, values):
                 print('{}: {}\n'.format(param_name, value))
