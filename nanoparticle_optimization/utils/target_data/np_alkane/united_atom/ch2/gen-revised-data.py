@@ -1,6 +1,7 @@
 import numpy as np
 
-radii = np.arange(2, 11)
+#radii = np.arange(2, 11)
+radii = [9]
 
 for radius in radii:
     # Load the initial target data obtained
@@ -32,16 +33,17 @@ for radius in radii:
     after_well = total[:argmin_U]
     before_well = total[argmin_U:]
     before_well_monotonic = [before_well[0]]
-    after_well_monotonic = [after_well[0]]
+    after_well_monotonic = [after_well[-1]]
     for i, point in enumerate(before_well[1:]):
-        if point[1] < before_well[i][1]:
+        if point[1] < before_well_monotonic[-1][1]:
             continue
         before_well_monotonic.append(point)
 
-    for i, point in enumerate(after_well[1:]):
-        if point[1] > after_well[i][1]:
+    for i, point in enumerate(after_well[-2::-1]):
+        if point[1] < after_well_monotonic[-1][1]:
             continue
         after_well_monotonic.append(point)
+    after_well_monotonic.reverse()
 
     threshold = -0.2
     after_well_monotonic = np.array([val for val in after_well_monotonic
