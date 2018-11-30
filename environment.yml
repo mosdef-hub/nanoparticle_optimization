@@ -1,0 +1,14 @@
+name: nanoopt-binder
+
+channels:
+  - conda-forge
+  - defaults
+  - mosdef
+  - omnia
+
+dependencies:
+  - python=3.5
+  - numpy
+  - scipy
+  - numba
+  - mbuild
