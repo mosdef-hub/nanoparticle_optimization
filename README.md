@@ -2,25 +2,9 @@
 
 # Installation
 
-It is recommended that the Anaconda package manager be used for installation of this
-software.
-
-After cloning the git repository, install the following prerequisites
-
-Python 2 & 3
+This package can be installed by cloning the repository and executing the following command:
 ```
-conda install openmm -c omnia
-conda install llvmlite
-```
-
-Python 2 only
-```
-conda install mdtraj -c omnia
-```
-
-Then, from the package root directory, install the package via
-```
-pip install -e .
+pip install .
 ```
 
 # Tutorials
