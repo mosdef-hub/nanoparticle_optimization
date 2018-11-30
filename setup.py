@@ -9,7 +9,6 @@ setup(
     install_requires=[
         'numba',
         'mbuild',
-        'openmdao',
     ],
     zip_safe=False,
 )
