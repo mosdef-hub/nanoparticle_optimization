@@ -2,7 +2,7 @@
 
 # Installation
 
-NanoOpt is centered around the [mBuild package](www.github.com/mosdef-hub/mbuild) which is easiest to install using the Anaconda package manager. The recommended installation instructions are as follows:
+NanoOpt is centered around the [mBuild package](https://github.com/mosdef-hub/mbuild) which is easiest to install using the Anaconda package manager. The recommended installation instructions are as follows:
 
 Install mBuild using conda:
 ```
