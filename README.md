@@ -1,4 +1,4 @@
-# Deriving potentials for coarse-grained nanoparticles via potential-matching
+# NanoOpt: Deriving potentials for coarse-grained nanoparticles via potential-matching
 
 # Installation
 
