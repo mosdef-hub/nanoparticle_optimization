@@ -18,5 +18,6 @@ pip install .
 
 # Tutorials
 
-The `tutorials` directory contains several tutorials in the form of Jupyter notebooks
-that walk through the basics of the optimization code.
+The `tutorials` directory contains several tutorials in the form of Jupyter notebooks that provide examples of the optimization code.
+These can be accessed online via Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mosdef-hub/nanoparticle_optimization/master)
+However, these are best run locally as several of the code blocks can take a considerable amount of time to run on Binder.
