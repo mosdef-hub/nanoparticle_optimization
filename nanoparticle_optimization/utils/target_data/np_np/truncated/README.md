@@ -1,0 +1,1 @@
+This target data differs from the "full" target data, as values for nanoparticle-nanoparticle separations below d + 0.40323nm x 0.8 are excluded, where d is the nanoparticle diameter and 0.40323 is the diameter of silica.
