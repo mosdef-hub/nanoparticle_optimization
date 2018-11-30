@@ -9,6 +9,7 @@ setup(
     install_requires=[
         'numba',
         'mbuild',
+        'matplotlib',
     ],
     zip_safe=False,
 )
