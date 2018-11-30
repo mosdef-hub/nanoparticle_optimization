@@ -2,8 +2,17 @@
 
 # Installation
 
-This package can be installed by cloning the repository and executing the following command:
+NanoOpt is centered around the [mBuild package](www.github.com/mosdef-hub/mbuild) which is easiest to install using the Anaconda package manager. The recommended installation instructions are as follows:
+
+Install mBuild using conda:
 ```
+conda install -c omnia -c mosdef mbuild
+```
+
+NanoOpt can then be cloned and installed via:
+```
+git clone https://github.com/summeraz/nanoparticle_optimization
+cd nanoparticle_optimization
 pip install .
 ```
 
