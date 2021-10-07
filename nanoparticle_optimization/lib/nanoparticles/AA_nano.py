@@ -21,7 +21,8 @@ class AA_nano(mb.Compound):
 
         O_buffer = 0.275
         # Replicate the bulk silica box if necessary
-        rep = math.ceil(((radius+O_buffer)/single.periodicity[0])*2.0)
+        # rep = math.ceil(((radius+O_buffer)/single.periodicity[0])*2.0)
+        rep = math.ceil(((radius + O_buffer) / single.box.Lx) * 2.0 )
         rep = int(rep)
         bulk = mb.recipes.TiledCompound(tile=single,n_tiles=np.array([rep,rep,rep]),name="bulk_silica")
         bulk_name = []
@@ -29,7 +30,7 @@ class AA_nano(mb.Compound):
         for particle in bulk.particles():
             bulk_name.append(particle.name)
             bulk_pos.append(particle.pos)
-        bulk_center = [bulk.periodicity[i]/2.0 for i in range(3)]
+        bulk_center = [bulk.box.lengths[i]/2.0 for i in range(3)]
         dists = distance.cdist(bulk_pos,[bulk_center],'euclidean')
         types = {'1':'Si','2':'O'}
         if O_layer:

@@ -8,7 +8,8 @@ class Silica(mb.Compound):
 
         mb.load('bulk_silica.pdb', compound=self,
                 relative_to_module=self.__module__)
-        self.periodicity = np.array([5, 5, 5])
+        self.box = mb.Box([5, 5, 5])
+        self.periodicity = [True, True, True]
 
 if __name__ == "__main__":
     s = Silica()
